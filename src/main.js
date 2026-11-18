@@ -9,7 +9,7 @@ import '@fontsource/ibm-plex-mono/latin-600.css';
 import './style.css';
 import { GroundTakeoffPhysics } from './physics/GroundTakeoffPhysics.js';
 import { AUTOLAND_SPEEDS, SIMULATION_STEP, SimulationClock } from './physics/SimulationClock.js';
-import { GEAR_HEIGHT, clamp, degToRad } from './physics/flightMath.js';
+import { GEAR_HEIGHT, angleDelta, clamp, degToRad } from './physics/flightMath.js';
 import { AutonomousLandingController } from './autopilot/AutonomousLandingController.js';
 import { createRunways } from './world/runways.js';
 import { CityAndAirports } from './world/CityAndAirports.js';
@@ -36,7 +36,7 @@ function start(renderer) {
   const rim = new THREE.DirectionalLight(0x7fb6e3, 0.76);
   rim.position.set(-800,180,-550);
   scene.add(rim);
-  const camera = new THREE.PerspectiveCamera(57, 1, 0.42, 43500);
+  const camera = new THREE.PerspectiveCamera(55, 1, 0.65, 43500);
   const runways = createRunways();
   const world = new CityAndAirports(scene, runways);
   const plane = new GroundTakeoffPhysics(runways);
@@ -52,7 +52,10 @@ function start(renderer) {
   const cameraModes = ['Chase cam', 'Nose cam', 'Wide cam'];
   let cameraMode = 0;
   let cameraReset = true;
+  let cameraHeading = plane.heading;
+  let cameraPitch = plane.pitch;
   let time = 0;
+  let visualTime = 0;
   let throttle = 0;
   let manualGear = true;
   let previousFrame = 0;
@@ -60,10 +63,20 @@ function start(renderer) {
   let boost = false;
   const desired = new THREE.Vector3();
   const focus = new THREE.Vector3();
-  const cameraFocus = new THREE.Vector3();
   const heading = new THREE.Vector3();
   const side = new THREE.Vector3();
   const projection = new THREE.Vector3();
+  const previousPose = { position: new THREE.Vector3() };
+  const renderPose = { position: new THREE.Vector3() };
+
+  function snapshot() {
+    previousPose.position.copy(plane.position);
+    previousPose.heading = plane.heading;
+    previousPose.pitch = plane.pitch;
+    previousPose.roll = plane.roll;
+    previousPose.throttle = plane.throttle;
+  }
+  snapshot();
 
   function reset(airborne) {
     autopilot.reset();
@@ -74,6 +87,7 @@ function start(renderer) {
     traffic.update(time);
     if (airborne) plane.positionForApproach(runways[0]);
     else plane.spawn(runways[0]);
+    snapshot();
     throttle = plane.throttle;
     manualGear = true;
     cameraReset = true;
@@ -145,31 +159,35 @@ function start(renderer) {
       gearDown: onGround || manualGear, boost };
   }
 
-  function updateCamera(dt) {
-    heading.set(Math.sin(plane.heading),0,Math.cos(plane.heading));
+  function updateCamera(dt, pose) {
+    const rate = Math.sqrt(clock.activeSpeed(autolandActive()));
+    const amount = cameraReset || cameraMode === 1 ? 1 : 1 - Math.exp(-dt * 6 * rate);
+    cameraHeading += angleDelta(pose.heading, cameraHeading) * amount;
+    cameraPitch = THREE.MathUtils.lerp(cameraPitch, pose.pitch, amount);
+    heading.set(Math.sin(cameraHeading),0,Math.cos(cameraHeading));
     side.set(heading.z,0,-heading.x);
-    const onGround = plane.state !== 'AIRBORNE';
-    desired.copy(plane.position);
-    focus.copy(plane.position);
+    desired.copy(pose.position);
+    focus.copy(pose.position);
     if (cameraMode === 1) {
       desired.addScaledVector(heading,7.8).y += 1.15;
-      focus.addScaledVector(heading,105).y += Math.sin(plane.pitch)*78 + 1;
+      focus.addScaledVector(heading,105).y += Math.sin(cameraPitch)*78 + 1;
     } else if (cameraMode === 2) {
       desired.addScaledVector(heading,-86).addScaledVector(side,44).y += 36;
       focus.addScaledVector(heading,34).y += 3;
     } else {
-      desired.addScaledVector(heading, -36).addScaledVector(side, onGround ? 12 : 8).y += onGround ? 9.4 : 10.4;
-      focus.addScaledVector(heading, 39).addScaledVector(side,7).y += onGround ? 4.2 : Math.sin(plane.pitch)*13;
+      const distance = Math.max(30, 25 / camera.aspect);
+      const airborne = clamp((pose.position.y - GEAR_HEIGHT) / 10, 0, 1);
+      desired.addScaledVector(heading, -distance).addScaledVector(side, 9 - 3 * airborne).y += 8.2 + 0.5 * airborne;
+      focus.addScaledVector(heading, 30).addScaledVector(side, 5).y += THREE.MathUtils.lerp(2.7, Math.sin(cameraPitch) * 9, airborne);
     }
     desired.y = Math.max(desired.y, 2.65);
-    const amount = cameraReset ? 1 : 1 - Math.exp(-dt * 4.5);
-    camera.position.lerp(desired, amount);
-    cameraFocus.lerp(focus, amount);
-    camera.lookAt(cameraFocus);
+    camera.position.copy(desired);
+    camera.lookAt(focus);
     camera.updateMatrixWorld();
     cameraReset = false;
-    projection.copy(plane.position).addScaledVector(heading,180);
-    projection.y += Math.max(1, Math.sin(plane.pitch) * 180);
+    heading.set(Math.sin(pose.heading), 0, Math.cos(pose.heading));
+    projection.copy(pose.position).addScaledVector(heading,180);
+    projection.y += Math.max(1, Math.sin(pose.pitch) * 180);
     projection.project(camera);
     reticle.style.left = (50 + projection.x * 50) + '%';
     reticle.style.top = (50 - projection.y * 50) + '%';
@@ -185,6 +203,7 @@ function start(renderer) {
   resize();
 
   function tick(step) {
+    snapshot();
     time += step;
     traffic.update(time);
     atc.update(traffic.aircraft);
@@ -201,14 +220,23 @@ function start(renderer) {
   function frame(now) {
     const dt = previousFrame ? Math.min(0.125, (now - previousFrame) / 1000) : SIMULATION_STEP;
     previousFrame = now;
-    clock.advance(dt, autolandActive, tick);
-    aircraft.update(plane,time,dt,boost);
-    shadow.position.set(plane.position.x,0.085,plane.position.z);
-    shadow.rotation.z = plane.heading;
-    shadow.material.opacity = Math.max(0,0.58 - Math.max(0,plane.position.y - GEAR_HEIGHT)/100);
-    shadow.scale.setScalar(1 + (plane.position.y - GEAR_HEIGHT) / 110);
-    updateCamera(dt);
-    world.update(plane,camera,autopilot);
+    const blend = clock.advance(dt, autolandActive, tick);
+    renderPose.position.lerpVectors(previousPose.position, plane.position, blend);
+    renderPose.heading = previousPose.heading + angleDelta(plane.heading, previousPose.heading) * blend;
+    renderPose.pitch = THREE.MathUtils.lerp(previousPose.pitch, plane.pitch, blend);
+    renderPose.roll = THREE.MathUtils.lerp(previousPose.roll, plane.roll, blend);
+    renderPose.throttle = THREE.MathUtils.lerp(previousPose.throttle, plane.throttle, blend);
+    renderPose.gearDown = plane.gearDown;
+    visualTime += dt;
+    aircraft.update(renderPose, visualTime, dt, boost);
+    const { x, y, z } = renderPose.position;
+    shadow.position.set(x,0.088,z);
+    shadow.rotation.z = renderPose.heading;
+    shadow.material.opacity = Math.max(0,0.58 - Math.max(0,y - GEAR_HEIGHT)/100);
+    shadow.visible = shadow.material.opacity > 0;
+    shadow.scale.setScalar(1 + (y - GEAR_HEIGHT) / 110);
+    updateCamera(dt, renderPose);
+    world.update(renderPose,camera,autopilot);
     hudAge += dt;
     if (hudAge > 0.092) {
       hudAge = 0;
@@ -239,7 +267,7 @@ function makeShadow(scene) {
 
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true, powerPreference: 'high-performance' });
 } catch {
   loading.textContent = 'The flight view requires WebGL 2. Enable browser graphics acceleration to start.';
 }

@@ -110,7 +110,7 @@ function signal(group, glowMap, x, y, z, size, color, radius = 14) {
 
 function buildSky(scene) {
   const sky = new THREE.Mesh(new THREE.SphereGeometry(37000, 30, 20), new THREE.ShaderMaterial({
-    side: THREE.BackSide, depthWrite: false, fog: false,
+    side: THREE.BackSide, depthTest: false, depthWrite: false, fog: false,
     vertexShader: `
       varying vec3 ray;
       void main(){ ray = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }
@@ -157,7 +157,7 @@ function createCity(scene) {
       if (z > 1130 && x < -1300) continue;
       if (x > 940 && z > 1520) continue;
       sidewalks.push([x,-0.008,z,169,0.025,173]);
-      roads.push([x,0.007,z+94,196,0.025,15], [x+91,0.01,z,16,0.025,195]);
+      roads.push([x,0.025,z+94,190,0.025,15], [x+91,0.043,z,16,0.025,198]);
       if ((row + col * 3) % 11 === 5) {
         for (let j = 0; j < 9; j++) trees.push([x + random()*135-68,3,z+random()*140-70,5+random()*4,8+random()*5,5+random()*4,0x354b47]);
         continue;
@@ -291,9 +291,10 @@ export class CityAndAirports {
     const side = index === 1 ? -1 : 1;
     const apronX = side * (width / 2 + 100);
     box(group,apron,apronX,0.015,252,147,0.045,600);
-    box(group,apron,side*65,0.019,142,94,0.045,30);
+    const taxiWidth = Math.abs(apronX) - 147/2 - width/2;
+    box(group,apron,side*(width/2 + taxiWidth/2),0.015,142,taxiWidth,0.045,30);
     box(group,pathPaint,apronX,0.061,147,0.34,0.024,290);
-    box(group,pathPaint,side*74,0.063,142,85,0.024,0.36);
+    box(group,pathPaint,(side*width/2 + apronX)/2,0.063,142,Math.abs(apronX) - width/2,0.024,0.36);
     const buildings = [100,226,376];
     for (const z of buildings) {
       box(group,terminal,apronX+side*30,6,z,44,12,54);
@@ -325,7 +326,9 @@ export class CityAndAirports {
       }
       const { along, agl } = runwayCoordinates(runway, plane.position);
       const angle = Math.atan2(Math.max(0,agl - GEAR_HEIGHT), Math.max(1,runway.aimPoint-along));
-      const white = along >= runway.aimPoint ? 0 : clamp(Math.round(2+(angle-degToRad(3))/degToRad(0.26)),0,4);
+      const balance = 2 + (angle - degToRad(3)) / degToRad(0.26);
+      const stable = visual.whiteLights !== null && Math.abs(balance - visual.whiteLights) < 0.65;
+      const white = along >= runway.aimPoint ? 0 : stable ? visual.whiteLights : clamp(Math.round(balance),0,4);
       if (visual.whiteLights !== white) {
         visual.whiteLights = white;
         papi.forEach((lamp,i) => lamp.setColor(i < white ? 0xfff5ed : 0xff2222));
@@ -366,4 +369,3 @@ export class CityAndAirports {
     this.path.add(line);
   }
 }
-
