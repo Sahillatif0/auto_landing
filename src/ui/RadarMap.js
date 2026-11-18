@@ -4,9 +4,9 @@ import { inRunwaySafetyZone } from '../world/AirspaceATC.js';
 
 const WIDTH = 340;
 const HEIGHT = 205;
-const CLEAR = '#6cebd1';
-const BLOCKED = '#ff827b';
-const TRAFFIC = '#ffc171';
+const CLEAR = '#4cc38a';
+const BLOCKED = '#e5484d';
+const TRAFFIC = '#f5a623';
 const polygon = (points, x, z) => points.map(([east, south]) => x(east) + ',' + z(south)).join(' ');
 const place = (node, x, y) => node.setAttribute('transform', `translate(${x} ${y})`);
 
@@ -34,24 +34,24 @@ export class RadarMap {
       north: Math.min(...points.map(point => point.z)), south: Math.max(...points.map(point => point.z)) };
     const map = elements['radar-world'];
     this.landmarks = [
-      { color: '#203439', points: [[-940, 2030], [6700, 2030], [6700, 7800], [-940, 7800]] },
-      { color: '#2a4139', points: [[-1450, -460], [1180, -460], [1180, -40], [20, -40], [20, 380],
+      { color: '#131720', points: [[-940, 2030], [6700, 2030], [6700, 7800], [-940, 7800]] },
+      { color: '#191e29', points: [[-1450, -460], [1180, -460], [1180, -40], [20, -40], [20, 380],
         [1350, 380], [920, 2025], [-1250, 2025], [-1250, 1120], [-1450, 1120]] },
     ].map(({ color, points }) => ({ points, shape: graphic(map, 'polygon', { fill: color }) }));
-    this.safety = graphic(map, 'line', { 'stroke-linecap': 'round', opacity: 0.12 });
-    this.route = graphic(map, 'polyline', { fill: 'none', stroke: '#8cefdc', 'stroke-width': 1.7,
+    this.safety = graphic(map, 'line', { 'stroke-linecap': 'round', opacity: 0.1 });
+    this.route = graphic(map, 'polyline', { fill: 'none', stroke: '#4cc38a', 'stroke-width': 1.5,
       'stroke-dasharray': '5 4', 'stroke-linecap': 'round' });
     this.airfields = runways.map(runway => {
       const mark = graphic(map, 'line', { 'stroke-width': 4, 'stroke-linecap': 'round' });
       graphic(mark, 'title').textContent = runway.name;
-      const centerline = graphic(map, 'line', { stroke: '#142825', 'stroke-width': 1, 'stroke-dasharray': '3 3' });
+      const centerline = graphic(map, 'line', { stroke: '#0b0d12', 'stroke-width': 1, 'stroke-dasharray': '3 3' });
       const label = graphic(map, 'text', { class: 'radar-runway' });
       label.textContent = runway.id.slice(4);
       return { runway, mark, centerline, label };
     });
     this.contacts = [];
-    this.track = graphic(elements['radar-aircraft-track'], 'line', { stroke: CLEAR, opacity: 0.5,
-      'stroke-width': 1.3, 'stroke-dasharray': '3 4' });
+    this.track = graphic(elements['radar-aircraft-track'], 'line', { stroke: CLEAR, opacity: 0.45,
+      'stroke-width': 1.25, 'stroke-dasharray': '3 4' });
 
     const rangeButtons = [...document.querySelectorAll('[data-radar-range]')];
     for (const button of rangeButtons) button.addEventListener('click', () => {

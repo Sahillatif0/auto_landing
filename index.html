@@ -3,133 +3,154 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#101619" />
+    <meta name="theme-color" content="#0b0d12" />
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23132723'/%3E%3Cpath d='M7 23 16 7l9 16-9-5-9 5Zm9-4v7' fill='none' stroke='%236cebd1' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2311141c'/%3E%3Cpath d='M7 23 16 7l9 16-9-5-9 5Zm9-4v7' fill='none' stroke='%234cc38a' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E"
     />
     <title>Autonomous Landing Logic Simulator</title>
   </head>
   <body>
-    <header class="topbar">
-      <div class="identity">
-        <span class="brand-mark" aria-hidden="true"
-          ><svg viewBox="0 0 24 24" fill="none">
-            <path
-              d="M4 18 12 4l8 14-8-4-8 4Z"
-              stroke="currentColor"
-              stroke-width="1.6"
-              stroke-linejoin="round"
-            />
-            <path d="M12 14v6" stroke="currentColor" stroke-width="1.6" /></svg
-        ></span>
-        <div>
-          <h1>Landing Logic</h1>
-          <p>Autonomous flight simulator</p>
-        </div>
-      </div>
-      <div class="airspace-title"><span></span> METRO AIRSPACE</div>
-      <div class="top-actions">
-        <button
-          id="camera-button"
-          class="top-button"
-          type="button"
-          data-action="camera"
-          title="Change camera (C)"
-        >
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <rect x="3" y="6" width="14" height="12" rx="2" />
-            <path d="m17 10 4-2v8l-4-2" /></svg
-          ><span id="camera-label">Chase cam</span>
-        </button>
-        <button
-          id="telemetry-button"
-          class="top-button selected"
-          type="button"
-          data-action="telemetry"
-          title="Toggle telemetry (H)"
-          aria-pressed="true"
-        >
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12h5l3-7 4 14 3-7h5" /></svg
-          ><span>Telemetry</span>
-        </button>
-      </div>
-    </header>
     <main id="simulator">
       <div id="flight-view" aria-label="Live 3D flight view"></div>
       <div class="vignette"></div>
       <p id="loading" class="loading" role="status">Loading flight view…</p>
 
-      <aside id="telemetry" class="panel telemetry" aria-label="Autonomous landing telemetry">
-        <div class="section-title">
-          <h2>Flight telemetry</h2>
-          <span class="live"><i></i> LIVE</span>
-        </div>
-        <dl class="speed-alt">
-          <div>
-            <dt>INDICATED SPEED</dt>
-            <dd><strong id="speed">000</strong> <small>KT</small></dd>
-          </div>
-          <div>
-            <dt>RADAR ALTITUDE</dt>
-            <dd><strong id="altitude">000</strong> <small>M AGL</small></dd>
-          </div>
-        </dl>
-        <div class="flight-strip">
-          <span id="aircraft-state">GROUNDED</span><span id="heading">090° HDG</span
-          ><span id="gear">GEAR DOWN</span>
-        </div>
-        <div class="autoland-info">
-          <div class="section-title">
-            <h3>Flight automation</h3>
-            <span id="mode" class="mode">MANUAL</span>
-          </div>
-          <div class="phase"><span>FLIGHT PHASE</span><strong id="phase">Standby</strong></div>
-          <ol class="sequence" aria-label="Autoland stages">
-            <li>Scan</li>
-            <li>Intercept</li>
-            <li>Glideslope</li>
-            <li>Flare</li>
-            <li>Rollout</li>
-          </ol>
-          <dl class="metrics">
-            <div>
-              <dt>Centerline offset</dt>
-              <dd id="cross-track">—</dd>
-            </div>
-            <div>
-              <dt>Glideslope deviation</dt>
-              <dd id="glideslope">—</dd>
-            </div>
-            <div>
-              <dt>Sink rate</dt>
-              <dd id="sink-rate">0.0 <small>m/s</small></dd>
-            </div>
+      <div class="view-controls">
+        <button
+          id="camera-button"
+          class="icon-button"
+          type="button"
+          data-action="camera"
+          title="Chase cam (C)"
+          aria-label="Change camera"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="3" y="6" width="14" height="12" rx="2" />
+            <path d="m17 10 4-2v8l-4-2" />
+          </svg>
+        </button>
+        <button
+          id="telemetry-button"
+          class="icon-button selected"
+          type="button"
+          data-action="telemetry"
+          title="Hide HUD (H)"
+          aria-pressed="true"
+          aria-label="Toggle HUD"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M2 12h5l3-7 4 14 3-7h5" />
+          </svg>
+        </button>
+        <button
+          id="shortcuts-button"
+          class="icon-button"
+          type="button"
+          title="Keyboard shortcuts (?)"
+          aria-expanded="false"
+          aria-controls="shortcuts"
+          aria-label="Keyboard shortcuts"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.7-.9 1.3v.4" />
+            <path d="M12 16.8h.01" />
+          </svg>
+        </button>
+      </div>
+
+      <div id="shortcuts" class="shortcuts" hidden>
+        <div>
+          <h2>Simulation</h2>
+          <dl>
+            <div><dt>Autoland</dt><dd><kbd>L</kbd></dd></div>
+            <div><dt>Auto takeoff</dt><dd><kbd>U</kbd></dd></div>
+            <div><dt>Traffic</dt><dd><kbd>T</kbd></dd></div>
+            <div><dt>ATC hold</dt><dd><kbd>G</kbd></dd></div>
+            <div><dt>Runway reset</dt><dd><kbd>R</kbd></dd></div>
+            <div><dt>Airborne start</dt><dd><kbd>F</kbd></dd></div>
+            <div><dt>Autoland speed</dt><dd><kbd>M</kbd></dd></div>
           </dl>
         </div>
-        <div class="runway-info">
-          <div class="section-title">
-            <h3>Runway clearance</h3>
-            <span id="rwy-count">3 RWY</span>
-          </div>
-          <table class="runway-table">
-            <thead>
-              <tr>
-                <th>RUNWAY</th>
-                <th>DIST.</th>
-                <th>TRAFFIC</th>
-                <th>ATC</th>
-              </tr>
-            </thead>
-            <tbody id="runway-rows"></tbody>
-          </table>
+        <div>
+          <h2>Manual flight</h2>
+          <dl>
+            <div><dt>Throttle / brake</dt><dd><kbd>W</kbd><kbd>S</kbd></dd></div>
+            <div><dt>Steer / roll</dt><dd><kbd>A</kbd><kbd>D</kbd></dd></div>
+            <div><dt>Rudder</dt><dd><kbd>Q</kbd><kbd>E</kbd></dd></div>
+            <div><dt>Climb / descend</dt><dd><kbd>Space</kbd><kbd>X</kbd></dd></div>
+            <div><dt>Boost</dt><dd><kbd>Shift</kbd></dd></div>
+            <div><dt>Gear</dt><dd><kbd>V</kbd></dd></div>
+          </dl>
         </div>
+        <div>
+          <h2>View</h2>
+          <dl>
+            <div><dt>Camera</dt><dd><kbd>C</kbd></dd></div>
+            <div><dt>Hide HUD</dt><dd><kbd>H</kbd></dd></div>
+            <div><dt>Shortcuts</dt><dd><kbd>?</kbd></dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <aside id="telemetry" class="hud" aria-label="Flight telemetry">
+        <span id="scene-indicator" class="num">RWY-09L · Ground</span>
+        <div class="readout">
+          <div>
+            <strong id="speed" class="num">0</strong>
+            <small>kt</small>
+          </div>
+          <div>
+            <strong id="altitude" class="num">0</strong>
+            <small>m</small>
+          </div>
+        </div>
+        <div class="hud-line">
+          <span id="aircraft-state">Grounded</span>
+          <span id="heading" class="num">090°</span>
+          <span id="gear">Gear down</span>
+        </div>
+        <div class="hud-line">
+          <span id="mode" class="mode">Manual</span>
+          <span id="phase">Standby</span>
+        </div>
+        <ol class="sequence" aria-label="Autoland stages">
+          <li title="Scan">Scan</li>
+          <li title="Intercept">Intercept</li>
+          <li title="Glideslope">Glideslope</li>
+          <li title="Flare">Flare</li>
+          <li title="Rollout">Rollout</li>
+        </ol>
+        <dl class="metrics">
+          <div>
+            <dt>Offset</dt>
+            <dd id="cross-track" class="num">—</dd>
+          </div>
+          <div>
+            <dt>Glideslope</dt>
+            <dd id="glideslope" class="num">—</dd>
+          </div>
+          <div>
+            <dt>Sink</dt>
+            <dd id="sink-rate" class="num">0.0 m/s</dd>
+          </div>
+        </dl>
+        <table class="runways">
+          <thead>
+            <tr>
+              <th>Runway</th>
+              <th>Distance</th>
+              <th>Traffic</th>
+              <th>ATC</th>
+            </tr>
+          </thead>
+          <tbody id="runway-rows"></tbody>
+        </table>
       </aside>
 
-      <div class="scene-info">
-        <span class="viewdot"></span><span id="scene-indicator">RUNWAY 09L&nbsp; / &nbsp;GROUND</span>
-      </div>
       <div class="target-reticle" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
+
       <div class="throttle" aria-label="Throttle">
         <div
           id="throttle-track"
@@ -142,14 +163,12 @@
         >
           <span id="throttle-bar"></span>
         </div>
-        <b id="throttle-value">0%</b><span>THR</span>
+        <b id="throttle-value" class="num">0%</b>
       </div>
+
       <div id="status-message" class="status-message" role="status"></div>
-      <aside class="panel map" aria-label="Airspace radar">
-        <div class="section-title">
-          <h2>Airspace radar</h2>
-          <span>N ↑</span>
-        </div>
+
+      <aside class="radar" aria-label="Airspace radar">
         <svg
           id="radar"
           viewBox="0 0 340 205"
@@ -158,7 +177,7 @@
         >
           <defs>
             <pattern id="radar-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path id="radar-grid-lines" fill="none" stroke="#3d5950" stroke-width="1" />
+              <path id="radar-grid-lines" fill="none" stroke="#1c212c" stroke-width="1" />
             </pattern>
           </defs>
           <rect width="340" height="205" fill="url(#radar-grid)" />
@@ -166,75 +185,64 @@
           <g id="radar-traffic"></g>
           <g id="radar-aircraft-track"></g>
           <g id="radar-aircraft">
-            <circle r="9" fill="#122621" stroke="#6cebd1" stroke-width="1" />
-            <path d="M0 -7L4.5 4 0 2.5 -4.5 4Z" fill="#bdffed" />
+            <circle r="8.5" fill="#11141c" stroke="#4cc38a" stroke-width="1.25" />
+            <path d="M0 -6.5L4 3.5 0 2 -4 3.5Z" fill="#eef0f5" />
           </g>
-          <path id="radar-scale-line" fill="none" stroke="#afc1b9" />
+          <path id="radar-scale-line" fill="none" stroke="#7a8296" />
           <text id="radar-scale-label" x="16" y="182" class="radar-scale"></text>
         </svg>
-        <div class="map-legend">
-          <span><b></b> OWN SHIP</span><span><b></b> TRAFFIC</span><span><b></b> CONFLICT</span>
-        </div>
         <div class="radar-range" role="group" aria-label="Radar zoom">
           <button type="button" data-radar-range="0" aria-pressed="true">Auto</button>
-          <button type="button" data-radar-range="5000" aria-pressed="false">5 km</button>
-          <button type="button" data-radar-range="2000" aria-pressed="false">2 km</button>
+          <button type="button" class="num" data-radar-range="5000" aria-pressed="false">5 km</button>
+          <button type="button" class="num" data-radar-range="2000" aria-pressed="false">2 km</button>
         </div>
       </aside>
 
-      <div id="landing-summary" class="panel landing-summary" hidden role="status">
-        <div class="section-title">
-          <h2>Autonomous landing complete</h2>
-          <span id="landing-runway"></span>
-        </div>
+      <div id="landing-summary" class="landing-summary" hidden role="status">
+        <h2>Landing complete</h2>
         <dl>
           <div>
-            <dt>Touchdown sink rate</dt>
-            <dd id="landing-sink"></dd>
+            <dt>Touchdown sink</dt>
+            <dd id="landing-sink" class="num"></dd>
           </div>
           <div>
             <dt>Centerline offset</dt>
-            <dd id="landing-offset"></dd>
+            <dd id="landing-offset" class="num"></dd>
           </div>
           <div>
             <dt>Stopping distance</dt>
-            <dd id="landing-distance"></dd>
+            <dd id="landing-distance" class="num"></dd>
           </div>
         </dl>
+        <span id="landing-runway" class="num"></span>
       </div>
 
-      <section id="demo-controls" class="panel demo" aria-label="Judge demo controls">
-        <div class="demo-head">
-          <h2>Demo controls</h2>
-          <span id="demo-target"></span>
-        </div>
-        <div class="demo-buttons">
-          <button type="button" class="primary" id="autoland-button" data-action="autoland">
-            <kbd>L</kbd><span>Engage autoland</span>
-          </button>
-          <button type="button" id="takeoff-button" data-action="takeoff" title="Auto takeoff from an aligned runway (U)">
-            <kbd>U</kbd><span>Auto takeoff</span>
-          </button>
-          <button type="button" id="traffic-button" data-action="traffic">
-            <kbd>T</kbd><span>Spawn traffic</span>
-          </button>
-          <button type="button" id="atc-button" data-action="atc"><kbd>G</kbd><span>ATC hold</span></button>
-          <button type="button" data-action="reset"><kbd>R</kbd><span>Runway reset</span></button>
-          <button type="button" data-action="airborne"><kbd>F</kbd><span>Airborne start</span></button>
-        </div>
-        <div class="autoland-speed" role="group" aria-label="Autoland simulation speed" title="Select speed or press M to cycle. Manual flight stays at 1×.">
-          <span>Autoland speed</span>
-          <button type="button" data-simulation-speed="1" aria-pressed="true">1×</button>
-          <button type="button" data-simulation-speed="2" aria-pressed="false">2×</button>
-          <button type="button" data-simulation-speed="4" aria-pressed="false">4×</button>
-          <button type="button" data-simulation-speed="8" aria-pressed="false">8×</button>
+      <section id="demo-controls" class="actions" aria-label="Simulation controls">
+        <button type="button" class="primary" id="autoland-button" data-action="autoland">
+          <span>Engage autoland</span>
+        </button>
+        <button type="button" id="takeoff-button" data-action="takeoff" title="Auto takeoff from an aligned runway (U)">
+          <span>Auto takeoff</span>
+        </button>
+        <button type="button" id="traffic-button" data-action="traffic">
+          <span>Spawn traffic</span>
+        </button>
+        <button type="button" id="atc-button" data-action="atc">
+          <span>ATC hold</span>
+        </button>
+        <button type="button" data-action="reset">
+          <span>Reset</span>
+        </button>
+        <button type="button" data-action="airborne">
+          <span>Airborne</span>
+        </button>
+        <div class="speed" role="group" aria-label="Autoland speed" title="Autoland speed (M)">
+          <button type="button" class="num" data-simulation-speed="1" aria-pressed="true">1×</button>
+          <button type="button" class="num" data-simulation-speed="2" aria-pressed="false">2×</button>
+          <button type="button" class="num" data-simulation-speed="4" aria-pressed="false">4×</button>
+          <button type="button" class="num" data-simulation-speed="8" aria-pressed="false">8×</button>
         </div>
       </section>
-      <footer class="flight-controls" aria-label="Manual flight controls">
-        <span><kbd>W</kbd> <kbd>S</kbd> Throttle / brake</span
-        ><span><kbd>A</kbd> <kbd>D</kbd> Steer / roll</span><span><kbd>Space</kbd> Climb / flare</span
-        ><span><kbd>X</kbd> Descend</span><span><kbd>Shift</kbd> Boost</span><span><kbd>V</kbd> Gear</span>
-      </footer>
     </main>
     <script type="module" src="/src/main.js"></script>
   </body>

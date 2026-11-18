@@ -1,11 +1,10 @@
 import * as THREE from 'three';
-import '@fontsource/barlow-semi-condensed/latin-600.css';
-import '@fontsource/barlow-semi-condensed/latin-700.css';
-import '@fontsource/dm-sans/latin-400.css';
-import '@fontsource/dm-sans/latin-500.css';
-import '@fontsource/dm-sans/latin-600.css';
-import '@fontsource/ibm-plex-mono/latin-500.css';
-import '@fontsource/ibm-plex-mono/latin-600.css';
+import '@fontsource/instrument-sans/latin-400.css';
+import '@fontsource/instrument-sans/latin-500.css';
+import '@fontsource/instrument-sans/latin-600.css';
+import '@fontsource/space-grotesk/latin-400.css';
+import '@fontsource/space-grotesk/latin-500.css';
+import '@fontsource/space-grotesk/latin-600.css';
 import './style.css';
 import { GroundTakeoffPhysics } from './physics/GroundTakeoffPhysics.js';
 import { AUTOLAND_SPEEDS, SIMULATION_STEP, SimulationClock } from './physics/SimulationClock.js';
@@ -143,6 +142,11 @@ function start(renderer) {
 
   window.addEventListener('keydown', event => {
     if (event.ctrlKey || event.altKey || event.metaKey) return;
+    if (event.key === '?') {
+      event.preventDefault();
+      hud.toggleShortcuts();
+      return;
+    }
     if (event.code === 'Space' && event.target instanceof HTMLButtonElement && event.target.matches(':focus-visible')) return;
     if (controlKeys.has(event.code)) {
       event.preventDefault();
