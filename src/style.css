@@ -515,7 +515,7 @@ dd {
 }
 .status-message {
   position: absolute;
-  bottom: 134px;
+  bottom: 160px;
   left: calc(50% + 52px);
   transform: translateX(-50%);
   white-space: nowrap;
@@ -593,6 +593,35 @@ dd {
   color: #ffaba5;
   border-color: #985757;
 }
+.autoland-speed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.autoland-speed span {
+  margin-right: 5px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.autoland-speed button {
+  min-width: 33px;
+  min-height: 26px;
+  border: 1px solid #405150;
+  border-radius: 4px;
+  background: #1d2a2d;
+  color: #d0dfdc;
+  font: 500 11px var(--mono);
+}
+.autoland-speed button:hover,
+.autoland-speed button[aria-pressed='true'] {
+  border-color: #5cae9c;
+  background: #21413b;
+  color: var(--mint);
+}
 kbd {
   display: inline-flex;
   align-items: center;
@@ -629,7 +658,7 @@ kbd {
   background: #1a292797;
 }
 .landing-summary {
-  bottom: 163px;
+  bottom: 193px;
   left: calc(50% + 46px);
   transform: translateX(-50%);
   width: min(380px, 94%);
@@ -721,7 +750,7 @@ kbd {
   .scene-info {
     right: 10px;
     top: auto;
-    bottom: 164px;
+    bottom: 204px;
     font-size: 8px;
     padding: 6px 8px;
   }
@@ -731,13 +760,13 @@ kbd {
     max-width: calc(100% - 20px);
   }
   .status-message {
-    bottom: 194px;
+    bottom: 236px;
     left: 50%;
     width: max-content;
     font-size: 9px;
   }
   .landing-summary {
-    bottom: 231px;
+    bottom: 266px;
     left: 50%;
   }
   .flight-controls {

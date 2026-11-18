@@ -8,6 +8,7 @@ import '@fontsource/ibm-plex-mono/latin-500.css';
 import '@fontsource/ibm-plex-mono/latin-600.css';
 import './style.css';
 import { GroundTakeoffPhysics } from './physics/GroundTakeoffPhysics.js';
+import { AUTOLAND_SPEEDS, SIMULATION_STEP, SimulationClock } from './physics/SimulationClock.js';
 import { GEAR_HEIGHT, clamp, degToRad } from './physics/flightMath.js';
 import { AutonomousLandingController } from './autopilot/AutonomousLandingController.js';
 import { createRunways } from './world/runways.js';
@@ -40,6 +41,8 @@ function start(renderer) {
   const world = new CityAndAirports(scene, runways);
   const plane = new GroundTakeoffPhysics(runways);
   const autopilot = new AutonomousLandingController(runways);
+  const clock = new SimulationClock();
+  const autolandActive = () => autopilot.active;
   const traffic = new NPCSystem(scene, runways);
   const atc = new AirspaceATC(runways);
   const aircraft = new AircraftVisual(scene, { player: true });
@@ -53,7 +56,6 @@ function start(renderer) {
   let throttle = 0;
   let manualGear = true;
   let previousFrame = 0;
-  let accumulator = 0;
   let hudAge = 1;
   let boost = false;
   const desired = new THREE.Vector3();
@@ -68,6 +70,7 @@ function start(renderer) {
     traffic.clearConflict();
     for (const runway of runways) runway.manualAtcOverride = null;
     time = 0;
+    clock.reset();
     traffic.update(time);
     if (airborne) plane.positionForApproach(runways[0]);
     else plane.spawn(runways[0]);
@@ -77,7 +80,7 @@ function start(renderer) {
     keys.clear();
   }
 
-  function action(name) {
+  function action(name, value) {
     const runway = autopilot.runway ?? atc.nearest(plane.position);
     switch (name) {
       case 'autoland':
@@ -95,6 +98,12 @@ function start(renderer) {
         cameraReset = true;
         break;
       case 'telemetry': hud.toggle(); break;
+      case 'simulation-speed': clock.setSpeed(value); break;
+      case 'cycle-speed': {
+        const next = (AUTOLAND_SPEEDS.indexOf(clock.speed) + 1) % AUTOLAND_SPEEDS.length;
+        clock.setSpeed(AUTOLAND_SPEEDS[next]);
+        break;
+      }
     }
     atc.update(traffic.aircraft);
     hudAge = 1;
@@ -102,7 +111,7 @@ function start(renderer) {
 
   const hud = new TelemetryHUD(runways, action);
   const actions = { KeyL: 'autoland', KeyT: 'traffic', KeyG: 'atc', KeyR: 'reset', KeyF: 'airborne',
-    KeyV: 'gear', KeyC: 'camera', KeyH: 'telemetry' };
+    KeyV: 'gear', KeyC: 'camera', KeyH: 'telemetry', KeyM: 'cycle-speed' };
   const controlKeys = new Set(['KeyW','ArrowUp','KeyS','ArrowDown','KeyA','KeyD','KeyQ','KeyE','ArrowLeft','ArrowRight',
     'Space','KeyX','ShiftLeft','ShiftRight']);
 
@@ -119,7 +128,7 @@ function start(renderer) {
   });
   window.addEventListener('keyup', event => keys.delete(event.code));
   window.addEventListener('blur', () => keys.clear());
-  document.addEventListener('visibilitychange', () => { previousFrame = 0; accumulator = 0; });
+  document.addEventListener('visibilitychange', () => { previousFrame = 0; clock.reset(); });
 
   const has = (...codes) => codes.some(code => keys.has(code));
   function manualCommand(dt) {
@@ -175,25 +184,24 @@ function start(renderer) {
   new ResizeObserver(resize).observe(view);
   resize();
 
-  const step = 1 / 60;
-  function frame(now) {
-    const dt = previousFrame ? Math.min(0.085, (now - previousFrame) / 1000) : step;
-    previousFrame = now;
-    accumulator += dt;
-    while (accumulator >= step) {
-      accumulator -= step;
-      time += step;
-      traffic.update(time);
-      atc.update(traffic.aircraft);
-      const command = autopilot.command(plane, step);
-      if (command) {
-        boost = false;
-        throttle = plane.throttle;
-        manualGear = command.gearDown;
-      }
-      plane.update(step, command ?? manualCommand(step));
-      autopilot.observe(plane);
+  function tick(step) {
+    time += step;
+    traffic.update(time);
+    atc.update(traffic.aircraft);
+    const command = autopilot.command(plane, step);
+    if (command) {
+      boost = false;
+      throttle = plane.throttle;
+      manualGear = command.gearDown;
     }
+    plane.update(step, command ?? manualCommand(step));
+    autopilot.observe(plane);
+  }
+
+  function frame(now) {
+    const dt = previousFrame ? Math.min(0.125, (now - previousFrame) / 1000) : SIMULATION_STEP;
+    previousFrame = now;
+    clock.advance(dt, autolandActive, tick);
     aircraft.update(plane,time,dt,boost);
     shadow.position.set(plane.position.x,0.085,plane.position.z);
     shadow.rotation.z = plane.heading;
@@ -204,7 +212,7 @@ function start(renderer) {
     hudAge += dt;
     if (hudAge > 0.092) {
       hudAge = 0;
-      hud.update(plane, autopilot, atc.nearest(plane.position), traffic.aircraft, traffic.conflict, cameraModes[cameraMode]);
+      hud.update(plane, autopilot, atc.nearest(plane.position), traffic.aircraft, traffic.conflict, cameraModes[cameraMode], clock.speed);
     }
     renderer.render(scene,camera);
   }

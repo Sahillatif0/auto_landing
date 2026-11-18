@@ -208,6 +208,13 @@
           <button type="button" data-action="reset"><kbd>R</kbd><span>Runway reset</span></button>
           <button type="button" data-action="airborne"><kbd>F</kbd><span>Airborne start</span></button>
         </div>
+        <div class="autoland-speed" role="group" aria-label="Autoland simulation speed" title="Select speed or press M to cycle. Manual flight stays at 1×.">
+          <span>Autoland speed</span>
+          <button type="button" data-simulation-speed="1" aria-pressed="true">1×</button>
+          <button type="button" data-simulation-speed="2" aria-pressed="false">2×</button>
+          <button type="button" data-simulation-speed="4" aria-pressed="false">4×</button>
+          <button type="button" data-simulation-speed="8" aria-pressed="false">8×</button>
+        </div>
       </section>
       <footer class="flight-controls" aria-label="Manual flight controls">
         <span><kbd>W</kbd> <kbd>S</kbd> Throttle / brake</span

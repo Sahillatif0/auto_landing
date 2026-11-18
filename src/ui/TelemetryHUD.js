@@ -34,6 +34,9 @@ export class TelemetryHUD {
     });
     this.setupRadar();
     this.visible = true;
+    this.speedButtons = [...document.querySelectorAll('[data-simulation-speed]')];
+    this.speedButtons.forEach(button => button.addEventListener('click', () =>
+      onAction('simulation-speed', Number(button.dataset.simulationSpeed))));
     document.querySelectorAll('[data-action]').forEach(button =>
       button.addEventListener('click', () => onAction(button.dataset.action)));
   }
@@ -51,7 +54,7 @@ export class TelemetryHUD {
     if (this.elements[id].textContent !== value) this.elements[id].textContent = value;
   }
 
-  update(plane, autopilot, nearest, npcs, conflict, cameraName) {
+  update(plane, autopilot, nearest, npcs, conflict, cameraName, simulationSpeed) {
     const runway = autopilot.runway ?? nearest;
     const { along, cross, agl } = runwayCoordinates(runway, plane.position);
     const phaseIndex = autopilot.state === State.COMPLETE ? sequence.length : sequence.indexOf(autopilot.state);
@@ -79,7 +82,11 @@ export class TelemetryHUD {
     this.elements['throttle-track'].setAttribute('aria-valuenow', throttle);
     this.text('camera-label', cameraName);
     const flightState = plane.state === 'AIRBORNE' ? 'FREE FLIGHT' : plane.state === 'STOPPED' ? 'FLIGHT STOPPED' : 'GROUND';
-    this.text('scene-indicator', runway.id + '  /  ' + (autopilot.active ? labels[autopilot.state].toUpperCase() : flightState));
+    const flightPhase = autopilot.active ? labels[autopilot.state].toUpperCase() : flightState;
+    const rateLabel = autopilot.active && simulationSpeed > 1 ? '  /  ' + simulationSpeed + '×' : '';
+    this.text('scene-indicator', runway.id + '  /  ' + flightPhase + rateLabel);
+    this.speedButtons.forEach(button => button.setAttribute('aria-pressed',
+      String(Number(button.dataset.simulationSpeed) === simulationSpeed)));
     this.text('demo-target', conflict ? 'TRAFFIC AT ' + conflict.runway.id : 'TARGET ' + runway.id);
     this.updateButton('autoland-button', autopilot.active ? 'Disengage autoland' : 'Engage autoland', autopilot.active);
     this.updateButton('traffic-button', conflict ? 'Clear traffic' : 'Spawn traffic', Boolean(conflict));

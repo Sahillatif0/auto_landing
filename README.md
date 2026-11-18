@@ -18,6 +18,8 @@ Open the URL printed by Vite in a browser with WebGL 2. `npm test` runs the flig
 3. Repeat **F → L**, then press **T** during final to inject civil traffic or **G** to withdraw ATC clearance. The aircraft climbs on a go-around and selects another clear runway if one is available. Press **T** again to remove the injected aircraft. A manual ATC release gives a green light only after the safety zone is clear.
 4. Press **R** to return to the runway. **H** toggles the telemetry and demo panels and **C** cycles camera views.
 
+Use **Autoland speed** to select **1×**, **2×**, **4×**, or **8×**. **M** cycles the presets. The rate applies to the aircraft, traffic, and runway clearance while autoland is active. Manual flight runs at 1×.
+
 | Action | Keys |
 | --- | --- |
 | Throttle up or down, ground braking | W/S or ↑/↓ |
