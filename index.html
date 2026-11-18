@@ -81,7 +81,7 @@
         </div>
         <div class="autoland-info">
           <div class="section-title">
-            <h3>Autoland</h3>
+            <h3>Flight automation</h3>
             <span id="mode" class="mode">MANUAL</span>
           </div>
           <div class="phase"><span>FLIGHT PHASE</span><strong id="phase">Standby</strong></div>
@@ -212,6 +212,9 @@
           <button type="button" class="primary" id="autoland-button" data-action="autoland">
             <kbd>L</kbd><span>Engage autoland</span>
           </button>
+          <button type="button" id="takeoff-button" data-action="takeoff" title="Auto takeoff from an aligned runway (U)">
+            <kbd>U</kbd><span>Auto takeoff</span>
+          </button>
           <button type="button" id="traffic-button" data-action="traffic">
             <kbd>T</kbd><span>Spawn traffic</span>
           </button>
@@ -229,8 +232,8 @@
       </section>
       <footer class="flight-controls" aria-label="Manual flight controls">
         <span><kbd>W</kbd> <kbd>S</kbd> Throttle / brake</span
-        ><span><kbd>A</kbd> <kbd>D</kbd> Steer / roll</span><span><kbd>Space</kbd> Pitch up</span
-        ><span><kbd>X</kbd> Pitch down</span><span><kbd>Shift</kbd> Boost</span><span><kbd>V</kbd> Gear</span>
+        ><span><kbd>A</kbd> <kbd>D</kbd> Steer / roll</span><span><kbd>Space</kbd> Climb / flare</span
+        ><span><kbd>X</kbd> Descend</span><span><kbd>Shift</kbd> Boost</span><span><kbd>V</kbd> Gear</span>
       </footer>
     </main>
     <script type="module" src="/src/main.js"></script>

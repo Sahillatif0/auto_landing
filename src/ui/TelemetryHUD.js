@@ -48,8 +48,8 @@ export class TelemetryHUD {
     if (this.elements[id].textContent !== value) this.elements[id].textContent = value;
   }
 
-  update(plane, autopilot, nearest, npcs, conflict, cameraName, simulationSpeed) {
-    const runway = autopilot.runway ?? nearest;
+  update(plane, autopilot, takeoff, nearest, npcs, conflict, cameraName, simulationSpeed) {
+    const runway = takeoff.runway ?? autopilot.runway ?? nearest;
     const { along, cross, agl } = runwayCoordinates(runway, plane.position);
     const phaseIndex = autopilot.state === State.COMPLETE ? sequence.length : sequence.indexOf(autopilot.state);
     const warning = autopilot.state === State.GO_AROUND;
@@ -59,9 +59,9 @@ export class TelemetryHUD {
     this.text('heading', padded((360 + Math.round(180 - radToDeg(plane.heading))) % 360) + '° HDG');
     this.text('aircraft-state', plane.state);
     this.text('gear', plane.gearDown ? 'GEAR DOWN' : 'GEAR UP');
-    this.text('mode', autopilot.active ? 'AUTOLAND ACTIVE' : 'MANUAL');
-    this.elements.mode.classList.toggle('active', autopilot.active);
-    this.text('phase', labels[autopilot.state]);
+    this.text('mode', takeoff.active ? 'AUTO TAKEOFF' : autopilot.active ? 'AUTOLAND ACTIVE' : 'MANUAL');
+    this.elements.mode.classList.toggle('active', autopilot.active || takeoff.active);
+    this.text('phase', takeoff.active ? takeoff.phase : labels[autopilot.state]);
     this.elements.phase.classList.toggle('warning', warning);
     this.stages.forEach((stage, i) => {
       stage.classList.toggle('current', i === phaseIndex);
@@ -76,17 +76,21 @@ export class TelemetryHUD {
     this.elements['throttle-track'].setAttribute('aria-valuenow', throttle);
     this.text('camera-label', cameraName);
     const flightState = plane.state === 'AIRBORNE' ? 'FREE FLIGHT' : plane.state === 'STOPPED' ? 'FLIGHT STOPPED' : 'GROUND';
-    const flightPhase = autopilot.active ? labels[autopilot.state].toUpperCase() : flightState;
+    const flightPhase = takeoff.active ? takeoff.phase.toUpperCase() : autopilot.active ? labels[autopilot.state].toUpperCase() : flightState;
     const rateLabel = autopilot.active && simulationSpeed > 1 ? '  /  ' + simulationSpeed + '×' : '';
     this.text('scene-indicator', runway.id + '  /  ' + flightPhase + rateLabel);
     this.speedButtons.forEach(button => button.setAttribute('aria-pressed',
       String(Number(button.dataset.simulationSpeed) === simulationSpeed)));
     this.text('demo-target', conflict ? 'TRAFFIC AT ' + conflict.runway.id : 'TARGET ' + runway.id);
     this.updateButton('autoland-button', autopilot.active ? 'Disengage autoland' : 'Engage autoland', autopilot.active);
+    this.updateButton('takeoff-button', takeoff.active ? 'Disengage takeoff' : 'Auto takeoff', takeoff.active);
+    this.elements['autoland-button'].disabled = takeoff.active;
+    this.elements['takeoff-button'].disabled = autopilot.active;
     this.updateButton('traffic-button', conflict ? 'Clear traffic' : 'Spawn traffic', Boolean(conflict));
     this.updateButton('atc-button', runway.manualAtcOverride === 'RED' ? 'Release ATC hold' : 'ATC hold', runway.manualAtcOverride === 'RED');
-    this.text('status-message', autopilot.state === State.COMPLETE ? '' : autopilot.message ||
-      (plane.state === 'STOPPED' ? 'Aircraft stopped · use Runway reset to fly again' : ''));
+    const landingMessage = autopilot.state === State.COMPLETE ? '' : autopilot.message;
+    const message = autopilot.active ? landingMessage : takeoff.message || landingMessage;
+    this.text('status-message', message || (plane.state === 'STOPPED' ? 'Aircraft stopped · use Runway reset to fly again' : ''));
     this.elements['status-message'].classList.toggle('warning', warning);
     this.elements['landing-summary'].hidden = autopilot.state !== State.COMPLETE;
     if (autopilot.state === State.COMPLETE) {
@@ -96,18 +100,19 @@ export class TelemetryHUD {
       this.text('landing-distance', autopilot.summary.stoppingDistance.toFixed(0) + ' m');
     }
     for (const { row, runway, badge } of this.rows) {
-      row.classList.toggle('target', runway === autopilot.runway);
+      row.classList.toggle('target', runway === (takeoff.runway ?? autopilot.runway));
       row.cells[1].textContent = Math.round(runway.thresholdPos.distanceTo(plane.position)).toLocaleString('en-US') + ' m';
       row.cells[2].textContent = runway.nearbyTrafficCount;
       badge.textContent = runway.clearanceLight;
       badge.classList.toggle('red', runway.clearanceLight === 'RED');
     }
-    this.radar.update(plane, npcs, autopilot, nearest);
+    this.radar.update(plane, npcs, autopilot, takeoff.runway ?? nearest);
   }
 
   updateButton(id, label, active) {
     const button = this.elements[id];
-    button.querySelector('span').textContent = label;
+    const caption = button.querySelector('span');
+    if (caption.textContent !== label) caption.textContent = label;
     button.setAttribute('aria-pressed', String(active));
     button.classList.toggle('engaged', active);
   }

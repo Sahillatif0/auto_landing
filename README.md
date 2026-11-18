@@ -22,6 +22,10 @@ Use **Autoland speed** to select **1×**, **2×**, **4×**, or **8×**. **M** cy
 
 **Airspace radar** shows the assigned approach, runway clearance, and traffic conflicts. **Auto** fits the runways and your aircraft, while **5 km** and **2 km** center the map on your aircraft at a fixed scale.
 
+Press **U** or click **Auto takeoff** while lined up near the start of a runway. It waits for green ATC clearance, accelerates, rotates, raises the gear after liftoff, and hands control back at **120 m AGL**. Press **U** again to disengage.
+
+For manual altitude changes, hold **Space** to climb or **X** to descend. On a manual landing, reduce throttle with **S** in the air, extend gear with **V** if it is up, and use a light **Space** input to flare near the runway. Hold **S** to brake after touchdown.
+
 | Action | Keys |
 | --- | --- |
 | Throttle up or down, ground braking | W/S or ↑/↓ |

@@ -628,6 +628,10 @@ dd {
   color: #ffaba5;
   border-color: #985757;
 }
+.demo-buttons button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
 .autoland-speed {
   display: flex;
   flex-wrap: wrap;

@@ -11,6 +11,7 @@ import { GroundTakeoffPhysics } from './physics/GroundTakeoffPhysics.js';
 import { AUTOLAND_SPEEDS, SIMULATION_STEP, SimulationClock } from './physics/SimulationClock.js';
 import { GEAR_HEIGHT, angleDelta, clamp, degToRad } from './physics/flightMath.js';
 import { AutonomousLandingController } from './autopilot/AutonomousLandingController.js';
+import { AutonomousTakeoffController } from './autopilot/AutonomousTakeoffController.js';
 import { createRunways } from './world/runways.js';
 import { CityAndAirports } from './world/CityAndAirports.js';
 import { AirspaceATC } from './world/AirspaceATC.js';
@@ -41,6 +42,7 @@ function start(renderer) {
   const world = new CityAndAirports(scene, runways);
   const plane = new GroundTakeoffPhysics(runways);
   const autopilot = new AutonomousLandingController(runways);
+  const takeoff = new AutonomousTakeoffController(runways);
   const clock = new SimulationClock();
   const autolandActive = () => autopilot.active;
   const traffic = new NPCSystem(scene, runways);
@@ -80,6 +82,7 @@ function start(renderer) {
 
   function reset(airborne) {
     autopilot.reset();
+    takeoff.reset();
     traffic.clearConflict();
     for (const runway of runways) runway.manualAtcOverride = null;
     time = 0;
@@ -95,10 +98,19 @@ function start(renderer) {
   }
 
   function action(name, value) {
-    const runway = autopilot.runway ?? atc.nearest(plane.position);
+    const runway = takeoff.runway ?? autopilot.runway ?? atc.nearest(plane.position);
     switch (name) {
       case 'autoland':
+        if (takeoff.active) break;
+        takeoff.reset();
         autopilot.toggle(plane);
+        throttle = plane.throttle;
+        manualGear = plane.gearDown;
+        break;
+      case 'takeoff':
+        if (autopilot.active) break;
+        takeoff.toggle(plane);
+        if (takeoff.active) autopilot.reset();
         throttle = plane.throttle;
         manualGear = plane.gearDown;
         break;
@@ -106,7 +118,7 @@ function start(renderer) {
       case 'atc': atc.toggleHold(runway); break;
       case 'reset': reset(false); break;
       case 'airborne': reset(true); break;
-      case 'gear': if (plane.state === 'AIRBORNE' && !autopilot.active) manualGear = !manualGear; break;
+      case 'gear': if (plane.state === 'AIRBORNE' && !autopilot.active && !takeoff.active) manualGear = !manualGear; break;
       case 'camera':
         cameraMode = (cameraMode + 1) % cameraModes.length;
         cameraReset = true;
@@ -124,7 +136,7 @@ function start(renderer) {
   }
 
   const hud = new TelemetryHUD(runways, action);
-  const actions = { KeyL: 'autoland', KeyT: 'traffic', KeyG: 'atc', KeyR: 'reset', KeyF: 'airborne',
+  const actions = { KeyL: 'autoland', KeyU: 'takeoff', KeyT: 'traffic', KeyG: 'atc', KeyR: 'reset', KeyF: 'airborne',
     KeyV: 'gear', KeyC: 'camera', KeyH: 'telemetry', KeyM: 'cycle-speed' };
   const controlKeys = new Set(['KeyW','ArrowUp','KeyS','ArrowDown','KeyA','KeyD','KeyQ','KeyE','ArrowLeft','ArrowRight',
     'Space','KeyX','ShiftLeft','ShiftRight']);
@@ -207,7 +219,7 @@ function start(renderer) {
     time += step;
     traffic.update(time);
     atc.update(traffic.aircraft);
-    const command = autopilot.command(plane, step);
+    const command = autopilot.command(plane, step) ?? takeoff.command(plane);
     if (command) {
       boost = false;
       throttle = plane.throttle;
@@ -215,6 +227,7 @@ function start(renderer) {
     }
     plane.update(step, command ?? manualCommand(step));
     autopilot.observe(plane);
+    takeoff.observe(plane);
   }
 
   function frame(now) {
@@ -240,7 +253,7 @@ function start(renderer) {
     hudAge += dt;
     if (hudAge > 0.092) {
       hudAge = 0;
-      hud.update(plane, autopilot, atc.nearest(plane.position), traffic.aircraft, traffic.conflict, cameraModes[cameraMode], clock.speed);
+      hud.update(plane, autopilot, takeoff, atc.nearest(plane.position), traffic.aircraft, traffic.conflict, cameraModes[cameraMode], clock.speed);
     }
     renderer.render(scene,camera);
   }
