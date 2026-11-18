@@ -7,7 +7,7 @@ import '@fontsource/space-grotesk/latin-500.css';
 import '@fontsource/space-grotesk/latin-600.css';
 import './style.css';
 import { GroundTakeoffPhysics } from './physics/GroundTakeoffPhysics.js';
-import { AUTOLAND_SPEEDS, SIMULATION_STEP, SimulationClock } from './physics/SimulationClock.js';
+import { SIMULATION_SPEEDS, SIMULATION_STEP, SimulationClock } from './physics/SimulationClock.js';
 import { GEAR_HEIGHT, angleDelta, clamp, degToRad } from './physics/flightMath.js';
 import { AutonomousLandingController } from './autopilot/AutonomousLandingController.js';
 import { AutonomousTakeoffController } from './autopilot/AutonomousTakeoffController.js';
@@ -16,6 +16,7 @@ import { CityAndAirports } from './world/CityAndAirports.js';
 import { AirspaceATC } from './world/AirspaceATC.js';
 import { AircraftVisual } from './world/AircraftVisual.js';
 import { NPCSystem } from './systems/npcSystem.js';
+import { CrashEffect } from './world/CrashEffect.js';
 import { TelemetryHUD } from './ui/TelemetryHUD.js';
 
 const view = document.querySelector('#flight-view');
@@ -43,10 +44,11 @@ function start(renderer) {
   const autopilot = new AutonomousLandingController(runways);
   const takeoff = new AutonomousTakeoffController(runways);
   const clock = new SimulationClock();
-  const autolandActive = () => autopilot.active;
   const traffic = new NPCSystem(scene, runways);
   const atc = new AirspaceATC(runways);
   const aircraft = new AircraftVisual(scene, { player: true });
+  const crashEffect = new CrashEffect(scene);
+  const crashFlash = document.querySelector('#crash-flash');
   const shadow = makeShadow(scene);
   const keys = new Set();
   const reticle = document.querySelector('.target-reticle');
@@ -62,6 +64,8 @@ function start(renderer) {
   let previousFrame = 0;
   let hudAge = 1;
   let boost = false;
+  let shake = 0;
+  let crashSeen = null;
   const desired = new THREE.Vector3();
   const focus = new THREE.Vector3();
   const heading = new THREE.Vector3();
@@ -93,6 +97,9 @@ function start(renderer) {
     throttle = plane.throttle;
     manualGear = true;
     cameraReset = true;
+    shake = 0;
+    crashSeen = null;
+    crashEffect.clear();
     keys.clear();
   }
 
@@ -125,8 +132,8 @@ function start(renderer) {
       case 'telemetry': hud.toggle(); break;
       case 'simulation-speed': clock.setSpeed(value); break;
       case 'cycle-speed': {
-        const next = (AUTOLAND_SPEEDS.indexOf(clock.speed) + 1) % AUTOLAND_SPEEDS.length;
-        clock.setSpeed(AUTOLAND_SPEEDS[next]);
+        const next = (SIMULATION_SPEEDS.indexOf(clock.speed) + 1) % SIMULATION_SPEEDS.length;
+        clock.setSpeed(SIMULATION_SPEEDS[next]);
         break;
       }
     }
@@ -176,7 +183,7 @@ function start(renderer) {
   }
 
   function updateCamera(dt, pose) {
-    const rate = Math.sqrt(clock.activeSpeed(autolandActive()));
+    const rate = Math.sqrt(clock.activeSpeed());
     const amount = cameraReset || cameraMode === 1 ? 1 : 1 - Math.exp(-dt * 6 * rate);
     cameraHeading += angleDelta(pose.heading, cameraHeading) * amount;
     cameraPitch = THREE.MathUtils.lerp(cameraPitch, pose.pitch, amount);
@@ -198,6 +205,13 @@ function start(renderer) {
     }
     desired.y = Math.max(desired.y, 2.65);
     camera.position.copy(desired);
+    if (shake > 0) {
+      const amount = shake * shake * 1.8;
+      camera.position.x += (Math.random() - 0.5) * amount;
+      camera.position.y += (Math.random() - 0.5) * amount;
+      camera.position.z += (Math.random() - 0.5) * amount;
+      shake = Math.max(0, shake - dt * 1.5);
+    }
     camera.lookAt(focus);
     camera.updateMatrixWorld();
     cameraReset = false;
@@ -237,7 +251,7 @@ function start(renderer) {
   function frame(now) {
     const dt = previousFrame ? Math.min(0.125, (now - previousFrame) / 1000) : SIMULATION_STEP;
     previousFrame = now;
-    const blend = clock.advance(dt, autolandActive, tick);
+    const blend = clock.advance(dt, tick);
     renderPose.position.lerpVectors(previousPose.position, plane.position, blend);
     renderPose.heading = previousPose.heading + angleDelta(plane.heading, previousPose.heading) * blend;
     renderPose.pitch = THREE.MathUtils.lerp(previousPose.pitch, plane.pitch, blend);
@@ -246,6 +260,15 @@ function start(renderer) {
     renderPose.gearDown = plane.gearDown;
     visualTime += dt;
     aircraft.update(renderPose, visualTime, dt, boost);
+    if (plane.crash && plane.crash !== crashSeen) {
+      crashSeen = plane.crash;
+      crashEffect.trigger(plane.crash.position);
+      shake = 1;
+      crashFlash.classList.remove('active');
+      void crashFlash.offsetWidth;
+      crashFlash.classList.add('active');
+    }
+    crashEffect.update(dt);
     const { x, y, z } = renderPose.position;
     shadow.position.set(x,0.088,z);
     shadow.rotation.z = renderPose.heading;

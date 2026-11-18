@@ -16,13 +16,15 @@ Open the URL printed by Vite in a browser with WebGL 2. `npm test` runs the flig
 1. Hold **W** to accelerate on RWY-09L. Tap **Space** near 132 kt to rotate early, or keep holding **W** for automatic rotation. Use **A/D** to steer and **S** to brake while on the runway.
 2. For a repeatable landing, press **F** to start airborne near RWY-09L and **L** to engage autoland. Watch the telemetry and approach gates through intercept, the 3° glideslope, flare, and rollout. The completion card shows touchdown sink rate, centerline offset, and stopping distance.
 3. Repeat **F → L**, then press **T** during final to inject civil traffic or **G** to withdraw ATC clearance. The aircraft climbs on a go-around and selects another clear runway if one is available. Press **T** again to remove the injected aircraft. A manual ATC release gives a green light only after the safety zone is clear.
-4. Press **R** to return to the runway. **H** toggles the telemetry and demo panels and **C** cycles camera views.
+4. Press **R** to return to the runway. **H** hides the HUD, **C** cycles camera views, and **?** opens the shortcut sheet.
 
-Use **Autoland speed** to select **1×**, **2×**, **4×**, or **8×**. **M** cycles the presets. The rate applies to the aircraft, traffic, and runway clearance while autoland is active. Manual flight runs at 1×.
+Use **Simulation speed** to select **1×**, **2×**, **4×**, or **8×**. **M** cycles the presets. The rate applies to the whole simulation — aircraft, traffic, and runway clearance — in manual flight and autoland alike.
 
 **Airspace radar** shows the assigned approach, runway clearance, and traffic conflicts. **Auto** fits the runways and your aircraft, while **5 km** and **2 km** center the map on your aircraft at a fixed scale.
 
 Press **U** or click **Auto takeoff** while lined up near the start of a runway. It waits for green ATC clearance, accelerates, rotates, raises the gear after liftoff, and hands control back at **120 m AGL**. Press **U** again to disengage.
+
+A touchdown that is too hard, banked, or made with the gear up ends in a crash: the aircraft stops, an explosion, debris, and a smoke plume mark the impact, and **R** resets the airspace.
 
 For manual altitude changes, hold **Space** to climb or **X** to descend. On a manual landing, reduce throttle with **S** in the air, extend gear with **V** if it is up, and use a light **Space** input to flare near the runway. Hold **S** to brake after touchdown.
 

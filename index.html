@@ -14,6 +14,7 @@
     <main id="simulator">
       <div id="flight-view" aria-label="Live 3D flight view"></div>
       <div class="vignette"></div>
+      <div id="crash-flash" class="crash-flash" aria-hidden="true"></div>
       <p id="loading" class="loading" role="status">Loading flight view…</p>
 
       <div class="view-controls">
@@ -236,7 +237,7 @@
         <button type="button" data-action="airborne">
           <span>Airborne</span>
         </button>
-        <div class="speed" role="group" aria-label="Autoland speed" title="Autoland speed (M)">
+        <div class="speed" role="group" aria-label="Simulation speed" title="Simulation speed (M)">
           <button type="button" class="num" data-simulation-speed="1" aria-pressed="true">1×</button>
           <button type="button" class="num" data-simulation-speed="2" aria-pressed="false">2×</button>
           <button type="button" class="num" data-simulation-speed="4" aria-pressed="false">4×</button>

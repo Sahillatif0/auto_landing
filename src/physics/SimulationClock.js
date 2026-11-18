@@ -1,5 +1,5 @@
 export const SIMULATION_STEP = 1 / 60;
-export const AUTOLAND_SPEEDS = [1, 2, 4, 8];
+export const SIMULATION_SPEEDS = [1, 2, 4, 8];
 
 export class SimulationClock {
   constructor() {
@@ -12,21 +12,19 @@ export class SimulationClock {
   }
 
   setSpeed(speed) {
-    if (AUTOLAND_SPEEDS.includes(speed)) this.speed = speed;
+    if (SIMULATION_SPEEDS.includes(speed)) this.speed = speed;
   }
 
-  activeSpeed(autolandActive) {
-    return autolandActive ? this.speed : 1;
+  activeSpeed() {
+    return this.speed;
   }
 
-  advance(seconds, isAutolandActive, tick) {
+  advance(seconds, tick) {
     this.remainingTime += Math.min(seconds, 0.125);
-    // Keep time in real seconds so finishing autoland can restore 1× during this frame.
-    let stepDuration = SIMULATION_STEP / this.activeSpeed(isAutolandActive());
+    const stepDuration = SIMULATION_STEP / this.speed;
     while (this.remainingTime + 1e-10 >= stepDuration) {
       this.remainingTime = Math.max(0, this.remainingTime - stepDuration);
       tick(SIMULATION_STEP);
-      stepDuration = SIMULATION_STEP / this.activeSpeed(isAutolandActive());
     }
     return this.remainingTime / stepDuration;
   }

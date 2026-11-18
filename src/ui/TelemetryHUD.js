@@ -88,7 +88,7 @@ export class TelemetryHUD {
     this.text('speed', String(Math.round(plane.speed * KNOTS)));
     this.text('altitude', String(Math.round(Math.max(0, plane.position.y - GEAR_HEIGHT))));
     this.text('heading', paddedHeading((360 + Math.round(180 - radToDeg(plane.heading))) % 360) + '°');
-    this.text('aircraft-state', stateLabels[plane.state] ?? plane.state);
+    this.text('aircraft-state', plane.crash ? 'Crashed' : stateLabels[plane.state] ?? plane.state);
     this.text('gear', plane.gearDown ? 'Gear down' : 'Gear up');
     this.text('mode', takeoff.active ? 'Auto takeoff' : autopilot.active ? 'Autoland' : 'Manual');
     this.elements.mode.classList.toggle('active', autopilot.active || takeoff.active);
@@ -110,7 +110,7 @@ export class TelemetryHUD {
     cameraButton.setAttribute('aria-label', 'Camera: ' + cameraName);
     const flightState = plane.state === 'AIRBORNE' ? 'Free flight' : plane.state === 'STOPPED' ? 'Flight stopped' : 'Ground';
     const flightPhase = takeoff.active ? takeoff.phase : autopilot.active ? labels[autopilot.state] : flightState;
-    const rateLabel = autopilot.active && simulationSpeed > 1 ? ' · ' + simulationSpeed + '×' : '';
+    const rateLabel = simulationSpeed > 1 ? ' · ' + simulationSpeed + '×' : '';
     this.text('scene-indicator', runway.id + ' · ' + flightPhase + rateLabel);
     this.speedButtons.forEach(button => button.setAttribute('aria-pressed',
       String(Number(button.dataset.simulationSpeed) === simulationSpeed)));
@@ -123,7 +123,8 @@ export class TelemetryHUD {
     const landingMessage = autopilot.state === State.COMPLETE ? '' : autopilot.message;
     const message = autopilot.active ? landingMessage : takeoff.message || landingMessage;
     const stopped = plane.state === 'STOPPED' && autopilot.state !== State.COMPLETE;
-    this.text('status-message', message || (stopped ? 'Aircraft stopped · use Reset to fly again' : ''));
+    const stoppedMessage = plane.crash ? 'Crashed · press R to reset' : 'Aircraft stopped · use Reset to fly again';
+    this.text('status-message', message || (stopped ? stoppedMessage : ''));
     this.elements['status-message'].classList.toggle('warning', warning);
     this.elements['landing-summary'].hidden = autopilot.state !== State.COMPLETE;
     if (autopilot.state === State.COMPLETE) {

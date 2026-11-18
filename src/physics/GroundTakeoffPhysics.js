@@ -33,6 +33,7 @@ export class GroundTakeoffPhysics {
     this.rotating = false;
     this.takeoffClimb = false;
     this.touchdown = null;
+    this.crash = null;
   }
 
   update(dt, command) {
@@ -99,7 +100,11 @@ export class GroundTakeoffPhysics {
     this.touchdown = { runway, sinkRate: Math.max(0, -this.verticalSpeed), position: this.position.clone() };
     this.state = this.gearDown && Math.abs(this.roll) < degToRad(15) && this.verticalSpeed > -7 &&
       (runway || this.speed < V_REF) ? 'GROUNDED' : 'STOPPED';
-    if (this.state === 'STOPPED') this.speed = 0;
+    if (this.state === 'STOPPED') {
+      this.crash = { position: this.position.clone(), sinkRate: this.touchdown.sinkRate, speed: this.speed,
+        roll: this.roll, gearDown: this.gearDown, onRunway: Boolean(runway) };
+      this.speed = 0;
+    }
     this.verticalSpeed = 0;
     this.roll = 0;
     this.rotating = false;
