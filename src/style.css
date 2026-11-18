@@ -443,7 +443,7 @@ dd {
 .throttle {
   position: absolute;
   right: 28px;
-  bottom: 281px;
+  bottom: 340px;
   width: 38px;
   display: grid;
   justify-items: center;
@@ -479,7 +479,7 @@ dd {
 .map {
   right: 22px;
   bottom: 106px;
-  width: 218px;
+  width: 264px;
   overflow: hidden;
   transform: translateZ(0);
 }
@@ -493,6 +493,19 @@ dd {
   display: block;
   width: 100%;
   background: #172925;
+}
+.radar-runway,
+.radar-scale {
+  font: 600 12px var(--mono);
+  fill: #e2eeea;
+  stroke: #142923;
+  stroke-width: 2px;
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+.radar-scale {
+  font-size: 10px;
+  fill: #bbc9c3;
 }
 .map-legend {
   display: flex;
@@ -510,8 +523,30 @@ dd {
   background: var(--mint);
   vertical-align: 1px;
 }
-.map-legend span + span b {
+.map-legend span:nth-child(2) b {
   background: #ffc171;
+}
+.map-legend span:last-child b {
+  background: var(--red);
+}
+.radar-range {
+  display: flex;
+  gap: 5px;
+  padding: 0 10px 8px;
+}
+.radar-range button {
+  flex: 1;
+  min-height: 26px;
+  border: 1px solid #405150;
+  border-radius: 4px;
+  background: #1d2a2d;
+  color: var(--muted);
+  font: 500 10px var(--mono);
+}
+.radar-range button:hover,
+.radar-range button[aria-pressed='true'] {
+  border-color: #5cae9c;
+  color: var(--mint);
 }
 .status-message {
   position: absolute;
@@ -701,10 +736,10 @@ kbd {
 }
 @media (max-width: 1000px) {
   .map {
-    width: 174px;
+    width: 215px;
   }
   .throttle {
-    bottom: 255px;
+    bottom: 310px;
   }
   .status-message,
   .landing-summary {

@@ -20,6 +20,8 @@ Open the URL printed by Vite in a browser with WebGL 2. `npm test` runs the flig
 
 Use **Autoland speed** to select **1×**, **2×**, **4×**, or **8×**. **M** cycles the presets. The rate applies to the aircraft, traffic, and runway clearance while autoland is active. Manual flight runs at 1×.
 
+**Airspace radar** shows the assigned approach, runway clearance, and traffic conflicts. **Auto** fits the runways and your aircraft, while **5 km** and **2 km** center the map on your aircraft at a fixed scale.
+
 | Action | Keys |
 | --- | --- |
 | Throttle up or down, ground braking | W/S or ↑/↓ |

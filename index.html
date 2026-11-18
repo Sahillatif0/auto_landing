@@ -152,22 +152,33 @@
         </div>
         <svg
           id="radar"
-          viewBox="0 0 340 230"
+          viewBox="0 0 340 205"
           role="img"
           aria-label="Map of runways, aircraft and civil traffic"
         >
           <defs>
-            <pattern id="radar-grid" width="31" height="31" patternUnits="userSpaceOnUse">
-              <path d="M0 31V0H31" fill="none" stroke="#30483e" stroke-width="1" />
+            <pattern id="radar-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path id="radar-grid-lines" fill="none" stroke="#3d5950" stroke-width="1" />
             </pattern>
           </defs>
-          <rect width="340" height="230" fill="url(#radar-grid)" />
+          <rect width="340" height="205" fill="url(#radar-grid)" />
           <g id="radar-world"></g>
-          <g id="radar-traffic" fill="#ffc171"></g>
-          <path id="radar-aircraft" d="M0,-8 5.4,5 0,2.4 -5.4,5Z" fill="#b7ffe9" />
+          <g id="radar-traffic"></g>
+          <g id="radar-aircraft-track"></g>
+          <g id="radar-aircraft">
+            <circle r="9" fill="#122621" stroke="#6cebd1" stroke-width="1" />
+            <path d="M0 -7L4.5 4 0 2.5 -4.5 4Z" fill="#bdffed" />
+          </g>
+          <path id="radar-scale-line" fill="none" stroke="#afc1b9" />
+          <text id="radar-scale-label" x="16" y="182" class="radar-scale"></text>
         </svg>
         <div class="map-legend">
-          <span><b></b> OWN SHIP</span><span><b></b> CIVIL TRAFFIC</span>
+          <span><b></b> OWN SHIP</span><span><b></b> TRAFFIC</span><span><b></b> CONFLICT</span>
+        </div>
+        <div class="radar-range" role="group" aria-label="Radar zoom">
+          <button type="button" data-radar-range="0" aria-pressed="true">Auto</button>
+          <button type="button" data-radar-range="5000" aria-pressed="false">5 km</button>
+          <button type="button" data-radar-range="2000" aria-pressed="false">2 km</button>
         </div>
       </aside>
 

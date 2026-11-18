@@ -1,5 +1,6 @@
 import { GEAR_HEIGHT, KNOTS, radToDeg, runwayCoordinates } from '../physics/flightMath.js';
 import { LandingState as State } from '../autopilot/AutonomousLandingController.js';
+import { RadarMap } from './RadarMap.js';
 
 const sequence = [State.SCANNING, State.INTERCEPT, State.FINAL, State.FLARE, State.ROLLOUT];
 const labels = {
@@ -9,13 +10,6 @@ const labels = {
 };
 const signed = (value, digits) => (value >= 0 ? '+' : '−') + Math.abs(value).toFixed(digits);
 const padded = value => String(Math.round(value)).padStart(3, '0');
-
-function graphic(parent, type, attributes) {
-  const node = document.createElementNS('http://www.w3.org/2000/svg', type);
-  for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, value);
-  parent.append(node);
-  return node;
-}
 
 export class TelemetryHUD {
   constructor(runways, onAction) {
@@ -32,7 +26,7 @@ export class TelemetryHUD {
       row.insertCell().append(badge);
       return { row, runway, badge };
     });
-    this.setupRadar();
+    this.radar = new RadarMap(this.elements, runways);
     this.visible = true;
     this.speedButtons = [...document.querySelectorAll('[data-simulation-speed]')];
     this.speedButtons.forEach(button => button.addEventListener('click', () =>
@@ -108,7 +102,7 @@ export class TelemetryHUD {
       badge.textContent = runway.clearanceLight;
       badge.classList.toggle('red', runway.clearanceLight === 'RED');
     }
-    this.drawMap(plane, npcs, autopilot.runway);
+    this.radar.update(plane, npcs, autopilot, nearest);
   }
 
   updateButton(id, label, active) {
@@ -116,49 +110,5 @@ export class TelemetryHUD {
     button.querySelector('span').textContent = label;
     button.setAttribute('aria-pressed', String(active));
     button.classList.toggle('engaged', active);
-  }
-
-  setupRadar() {
-    const world = this.elements['radar-world'];
-    const scale = 0.031;
-    graphic(world, 'rect', { x: -1420 * scale, y: -445 * scale, width: 88, height: 72, fill: '#273a34' });
-    graphic(world, 'rect', { x: -945 * scale, y: 2020 * scale, width: 240, height: 91, fill: '#20373b' });
-    for (const entry of this.rows) {
-      const { thresholdPos: start, endPos: end, headingVec: direction, id } = entry.runway;
-      entry.mapLine = graphic(world, 'line', { x1: start.x * scale, y1: start.z * scale,
-        x2: end.x * scale, y2: end.z * scale });
-      entry.mapApproach = graphic(world, 'line', { x1: (start.x - direction.x * 1600) * scale,
-        y1: (start.z - direction.z * 1600) * scale, x2: start.x * scale, y2: start.z * scale,
-        'stroke-dasharray': '4 4', 'stroke-width': 1.4 });
-      graphic(world, 'text', { x: start.x * scale + 5, y: start.z * scale - 7, fill: '#e2e9e5',
-        'font-size': 11, 'font-family': 'monospace' }).textContent = id.slice(4);
-    }
-    this.radarDots = Array.from({ length: 4 }, () => graphic(this.elements['radar-traffic'], 'circle', { r: 3 }));
-  }
-
-  drawMap(plane, npcs, target) {
-    const scale = 0.031;
-    const originX = 170 - (plane.position.x * 0.25 - 400) * scale;
-    const originZ = 115 - (plane.position.z * 0.18 + 328) * scale;
-    const translation = 'translate(' + originX + ' ' + originZ + ')';
-    this.elements['radar-world'].setAttribute('transform', translation);
-    this.elements['radar-grid'].setAttribute('patternTransform', translation);
-    for (const { runway, mapLine, mapApproach } of this.rows) {
-      const color = runway.clearanceLight === 'GREEN' ? '#62dab6' : '#ff827c';
-      mapLine.setAttribute('stroke', color);
-      mapLine.setAttribute('stroke-width', runway === target ? 3.6 : 2.5);
-      mapApproach.setAttribute('stroke', runway === target ? color : 'none');
-    }
-    this.radarDots.forEach((dot, i) => {
-      const npc = npcs[i];
-      dot.setAttribute('visibility', npc ? 'visible' : 'hidden');
-      if (!npc) return;
-      dot.setAttribute('cx', originX + npc.position.x * scale);
-      dot.setAttribute('cy', originZ + npc.position.z * scale);
-    });
-    const x = Math.max(9, Math.min(331, originX + plane.position.x * scale));
-    const z = Math.max(9, Math.min(221, originZ + plane.position.z * scale));
-    const rotation = 180 - radToDeg(plane.heading);
-    this.elements['radar-aircraft'].setAttribute('transform', 'translate(' + x + ' ' + z + ') rotate(' + rotation + ')');
   }
 }
